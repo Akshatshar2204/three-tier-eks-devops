@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  labels:
+    app.kubernetes.io/component: mongodb
+spec:
+  serviceName: mongo
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: mongodb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: {{ .Values.mongodb.image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mongodb
+              containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.secretName }}
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.secretName }}
+                  key: password
+          resources:
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - >-
+                  mongo --quiet --host 127.0.0.1
+                  --username "$MONGO_INITDB_ROOT_USERNAME"
+                  --password "$MONGO_INITDB_ROOT_PASSWORD"
+                  --authenticationDatabase admin
+                  --eval 'quit(db.adminCommand("ping").ok ? 0 : 1)'
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - >-
+                  mongo --quiet --host 127.0.0.1
+                  --username "$MONGO_INITDB_ROOT_USERNAME"
+                  --password "$MONGO_INITDB_ROOT_PASSWORD"
+                  --authenticationDatabase admin
+                  --eval 'quit(db.adminCommand("ping").ok ? 0 : 1)'
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - >-
+                  mongo --quiet --host 127.0.0.1
+                  --username "$MONGO_INITDB_ROOT_USERNAME"
+                  --password "$MONGO_INITDB_ROOT_PASSWORD"
+                  --authenticationDatabase admin
+                  --eval 'quit(db.adminCommand("ping").ok ? 0 : 1)'
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+      volumes:
+        - name: mongo-data
+          persistentVolumeClaim:
+            claimName: mongo-data

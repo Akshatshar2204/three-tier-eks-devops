@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/component: backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: backend
+    spec:
+      initContainers:
+        - name: wait-for-mongodb
+          image: {{ .Values.mongodb.image | quote }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              until mongo --quiet --host mongo:27017 \
+                --username "$MONGO_USERNAME" \
+                --password "$MONGO_PASSWORD" \
+                --authenticationDatabase admin \
+                --eval 'quit(db.adminCommand("ping").ok ? 0 : 1)' >/dev/null 2>&1; do
+                echo "Waiting for MongoDB to be ready..."
+                sleep 5
+              done
+          env:
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.secretName }}
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.secretName }}
+                  key: password
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3500
+          env:
+            - name: PORT
+              value: "3500"
+            - name: MONGO_CONN_STR
+              value: "mongodb://mongo:27017/todoapp?authSource=admin"
+            - name: USE_DB_AUTH
+              value: "true"
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.secretName }}
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.secretName }}
+                  key: password
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /started
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20

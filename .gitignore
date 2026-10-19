@@ -1,0 +1,15 @@
+
+# Terraform working files and state
+**/.terraform/*
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/crash.log
+**/crash.*.log
+*.tfvars
+*.tfvars.json
+
+# Application dependencies and local environment files
+**/node_modules/
+**/.env
+**/build/
