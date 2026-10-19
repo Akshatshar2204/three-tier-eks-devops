@@ -94,7 +94,10 @@ spec:
       steps {
         container('git') {
           checkout scm
-          sh 'git rev-parse --short HEAD'
+          sh '''
+            git config --global --add safe.directory "$WORKSPACE"
+            git rev-parse --short HEAD
+          '''
         }
       }
     }
@@ -196,6 +199,7 @@ spec:
           ]) {
             sh '''
               set -eu
+              git config --global --add safe.directory "$WORKSPACE"
 
               git config user.name "Jenkins CI"
               git config user.email "akshatshar2204@users.noreply.github.com"
