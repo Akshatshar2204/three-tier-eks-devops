@@ -145,7 +145,11 @@ spec:
             ECR_AUTH="$(printf 'AWS:%s' "$ECR_PASSWORD" | base64 | tr -d '\\n')"
             printf '{"auths":{"%s":{"auth":"%s"}}}\\n' \
               "$ECR_REGISTRY" "$ECR_AUTH" > "$WORKSPACE/.docker/config.json"
+            chown 1000:1000 "$WORKSPACE/.docker"
+            chown 1000:1000 "$WORKSPACE/.docker/config.json"
+            chmod 700 "$WORKSPACE/.docker"
             chmod 600 "$WORKSPACE/.docker/config.json"
+
             unset ECR_PASSWORD ECR_AUTH
           '''
         }
