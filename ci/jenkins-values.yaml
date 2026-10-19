@@ -1,0 +1,41 @@
+controller:
+  serviceType: ClusterIP
+  numExecutors: 0
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1536Mi"
+
+  admin:
+    createSecret: true
+    username: admin
+
+persistence:
+  enabled: true
+  storageClass: gp3-csi
+  accessMode: ReadWriteOnce
+  size: 8Gi
+
+serviceAccount:
+  create: true
+
+serviceAccountAgent:
+  create: true
+  name: jenkins-agent
+
+agent:
+  enabled: true
+  useDefaultServiceAccount: true
+  serviceAccount: jenkins-agent
+  containerCap: 2
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
