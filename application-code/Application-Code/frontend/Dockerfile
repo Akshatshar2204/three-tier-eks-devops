@@ -14,6 +14,11 @@ RUN npm run build
 
 FROM nginx:alpine
 
+# Apply security updates for the affected Alpine packages.
+RUN apk update \
+    && apk upgrade libexpat libx11 \
+    && rm -rf /var/cache/apk/*
+
 COPY --from=build /usr/src/app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
