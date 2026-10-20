@@ -2,7 +2,7 @@ frontend:
   replicas: 2
   image:
     repository: 828479100787.dkr.ecr.ap-south-1.amazonaws.com/three-tier-eks-frontend
-    tag: build-17
+    tag: build-20
     pullPolicy: IfNotPresent
   service:
     type: LoadBalancer
@@ -19,7 +19,7 @@ backend:
   replicas: 2
   image:
     repository: 828479100787.dkr.ecr.ap-south-1.amazonaws.com/three-tier-eks-backend
-    tag: build-17
+    tag: build-20
     pullPolicy: IfNotPresent
   service:
     port: 3500
