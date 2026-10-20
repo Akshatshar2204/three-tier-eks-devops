@@ -266,7 +266,7 @@ spec:
               --scanners vuln \
               --severity HIGH,CRITICAL \
               --ignore-unfixed \
-              --exit-code 0 \
+              --exit-code 1 \
               "${FRONTEND_REPO}:${IMAGE_TAG}"
 
             echo "Scanning backend image..."
@@ -274,7 +274,7 @@ spec:
               --scanners vuln \
               --severity HIGH,CRITICAL \
               --ignore-unfixed \
-              --exit-code 0 \
+              --exit-code 1 \
               "${BACKEND_REPO}:${IMAGE_TAG}"
           '''
         }
