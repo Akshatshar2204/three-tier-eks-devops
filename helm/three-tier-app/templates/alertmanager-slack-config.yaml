@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: slack-test-notifications
+  namespace: monitoring
+spec:
+  route:
+    receiver: slack-ci-cd-botapp
+    groupBy:
+      - alertname
+    groupWait: 5s
+    groupInterval: 30s
+    repeatInterval: 1h
+    matchers:
+      - name: alertname
+        value: SlackTestAlert
+        matchType: "="
+  receivers:
+    - name: slack-ci-cd-botapp
+      slackConfigs:
+        - apiURL:
+            name: slack-webhook
+            key: url
+          sendResolved: true
