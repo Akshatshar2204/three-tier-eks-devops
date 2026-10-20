@@ -65,6 +65,17 @@ spec:
         limits:
           cpu: "1500m"
           memory: "1536Mi"
+      - name: trivy
+        image: public.ecr.aws/aquasecurity/trivy:0.75.0
+        command: ["cat"]
+        tty: true
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
 '''
     }
   }
@@ -178,6 +189,35 @@ spec:
               --opt filename=Dockerfile \
               --output "type=image,name=${BACKEND_REPO}:${IMAGE_TAG},push=true" \
               --progress plain
+          '''
+        }
+      }
+    }
+
+    stage('Scan Images with Trivy') {
+      steps {
+        container('trivy') {
+          sh '''
+            set -eu
+            export DOCKER_CONFIG="$WORKSPACE/.docker"
+
+            trivy --version
+
+            echo "Scanning frontend image..."
+            trivy image \
+              --scanners vuln \
+              --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              --exit-code 0 \
+              "${FRONTEND_REPO}:${IMAGE_TAG}"
+
+            echo "Scanning backend image..."
+            trivy image \
+              --scanners vuln \
+              --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              --exit-code 0 \
+              "${BACKEND_REPO}:${IMAGE_TAG}"
           '''
         }
       }
