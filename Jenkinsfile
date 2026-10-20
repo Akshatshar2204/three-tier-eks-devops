@@ -65,17 +65,17 @@ spec:
         limits:
           cpu: "1500m"
           memory: "1536Mi"
-      - name: trivy
-        image: public.ecr.aws/aquasecurity/trivy:0.75.0
-        command: ["cat"]
-        tty: true
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "256Mi"
-          limits:
-            cpu: "500m"
-            memory: "1Gi"
+    - name: trivy
+      image: public.ecr.aws/aquasecurity/trivy:0.75.0
+      command: ["cat"]
+      tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "1Gi"
 '''
     }
   }
