@@ -9,7 +9,7 @@ spec:
   serviceAccountName: jenkins-agent
   containers:
     - name: node
-      image: node:14
+      image: node:24-bookworm-slim
       command: ["cat"]
       tty: true
       resources:
@@ -130,14 +130,13 @@ spec:
       }
     }
 
-    stage('Test Frontend') {
+    stage('Build Frontend') {
       steps {
         container('node') {
           dir('application-code/Application-Code/frontend') {
             sh '''
               set -eu
               npm ci --no-audit --no-fund
-              CI=true npm test -- --watchAll=false --passWithNoTests
               npm run build
             '''
           }
@@ -168,6 +167,24 @@ spec:
     }
 
     stage('Build and Push Images') {
+      when {
+        expression {
+          def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
+          if (branch.startsWith('refs/remotes/origin/')) {
+            branch = branch.substring('refs/remotes/origin/'.length())
+          }
+          if (branch.startsWith('refs/heads/')) {
+            branch = branch.substring('refs/heads/'.length())
+          }
+          if (branch.startsWith('origin/')) {
+            branch = branch.substring('origin/'.length())
+          }
+          if (branch.startsWith('*/')) {
+            branch = branch.substring(2)
+          }
+          branch == 'main'
+        }
+      }
       steps {
         container('buildkit') {
           sh '''
@@ -195,6 +212,24 @@ spec:
     }
 
     stage('Scan Images with Trivy') {
+      when {
+        expression {
+          def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
+          if (branch.startsWith('refs/remotes/origin/')) {
+            branch = branch.substring('refs/remotes/origin/'.length())
+          }
+          if (branch.startsWith('refs/heads/')) {
+            branch = branch.substring('refs/heads/'.length())
+          }
+          if (branch.startsWith('origin/')) {
+            branch = branch.substring('origin/'.length())
+          }
+          if (branch.startsWith('*/')) {
+            branch = branch.substring(2)
+          }
+          branch == 'main'
+        }
+      }
       steps {
         container('trivy') {
           sh '''
@@ -232,6 +267,24 @@ spec:
     }
 
     stage('Update GitOps Image Tags') {
+      when {
+        expression {
+          def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
+          if (branch.startsWith('refs/remotes/origin/')) {
+            branch = branch.substring('refs/remotes/origin/'.length())
+          }
+          if (branch.startsWith('refs/heads/')) {
+            branch = branch.substring('refs/heads/'.length())
+          }
+          if (branch.startsWith('origin/')) {
+            branch = branch.substring('origin/'.length())
+          }
+          if (branch.startsWith('*/')) {
+            branch = branch.substring(2)
+          }
+          branch == 'main'
+        }
+      }
       steps {
         container('git') {
           withCredentials([

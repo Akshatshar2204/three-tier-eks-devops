@@ -13,3 +13,4 @@
 **/node_modules/
 **/.env
 **/build/
+/application-code/Application-Code/frontend/dist/

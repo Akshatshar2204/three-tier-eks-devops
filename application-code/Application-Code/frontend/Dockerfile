@@ -1,18 +1,20 @@
-FROM node:14 AS build
+FROM node:24-alpine AS build
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 
-ENV REACT_APP_BACKEND_URL=/api/tasks
+ARG VITE_BACKEND_URL=/api/tasks
+ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
+
 RUN npm run build
 
 FROM nginx:alpine
 
-COPY --from=build /usr/src/app/build /usr/share/nginx/html
+COPY --from=build /usr/src/app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
