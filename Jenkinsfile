@@ -104,7 +104,11 @@ spec:
     stage('Checkout') {
       steps {
         container('git') {
-          checkout scm
+          script {
+            def scmInfo = checkout scm
+            env.CHECKED_OUT_GIT_BRANCH = scmInfo.GIT_BRANCH ?: env.GIT_BRANCH ?: ''
+            echo "SCM branch metadata: ${env.CHECKED_OUT_GIT_BRANCH ?: '<unset>'}"
+          }
           sh '''
             git config --global --add safe.directory "$WORKSPACE"
             git rev-parse --short HEAD
@@ -145,10 +149,29 @@ spec:
     }
 
     stage('Authenticate to ECR') {
+      when {
+        expression {
+          def branch = env.CHECKED_OUT_GIT_BRANCH ?: env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
+          if (branch.startsWith('refs/remotes/origin/')) {
+            branch = branch.substring('refs/remotes/origin/'.length())
+          }
+          if (branch.startsWith('refs/heads/')) {
+            branch = branch.substring('refs/heads/'.length())
+          }
+          if (branch.startsWith('origin/')) {
+            branch = branch.substring('origin/'.length())
+          }
+          if (branch.startsWith('*/')) {
+            branch = branch.substring(2)
+          }
+          branch == 'main'
+        }
+      }
       steps {
         container('aws') {
           sh '''
             set -eu
+            set +x
             aws sts get-caller-identity
             mkdir -p "$WORKSPACE/.docker"
             ECR_PASSWORD="$(aws ecr get-login-password --region "$AWS_REGION")"
@@ -169,7 +192,7 @@ spec:
     stage('Build and Push Images') {
       when {
         expression {
-          def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
+          def branch = env.CHECKED_OUT_GIT_BRANCH ?: env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
           if (branch.startsWith('refs/remotes/origin/')) {
             branch = branch.substring('refs/remotes/origin/'.length())
           }
@@ -214,7 +237,7 @@ spec:
     stage('Scan Images with Trivy') {
       when {
         expression {
-          def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
+          def branch = env.CHECKED_OUT_GIT_BRANCH ?: env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
           if (branch.startsWith('refs/remotes/origin/')) {
             branch = branch.substring('refs/remotes/origin/'.length())
           }
@@ -269,7 +292,7 @@ spec:
     stage('Update GitOps Image Tags') {
       when {
         expression {
-          def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
+          def branch = env.CHECKED_OUT_GIT_BRANCH ?: env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
           if (branch.startsWith('refs/remotes/origin/')) {
             branch = branch.substring('refs/remotes/origin/'.length())
           }
